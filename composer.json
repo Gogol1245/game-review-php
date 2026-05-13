@@ -1,0 +1,13 @@
+{
+    "name": "student/game-review-site",
+    "description": "Game Review Website - School Project",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "classmap": [
+            "classes/"
+        ]
+    }
+}
