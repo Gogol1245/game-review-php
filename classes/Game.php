@@ -1,43 +1,35 @@
 <?php
 class Game {
-    private PDO $db;
+    private $db;
     
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
     }
     
-    public function getAll(int $limit = 10, int $offset = 0): array {
-        $stmt = $this->db->prepare("
-            SELECT * FROM games 
-            WHERE is_active = 1 
-            ORDER BY created_at DESC 
-            LIMIT :limit OFFSET :offset
-        ");
+    public function getAll($limit = 10, $offset = 0) {
+        $stmt = $this->db->prepare("SELECT * FROM games WHERE is_active = 1 ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->bindValue('offset', $offset, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
     
-    public function getBySlug(string $slug): ?array {
+    public function getBySlug($slug) {
         $stmt = $this->db->prepare("SELECT * FROM games WHERE slug = :slug AND is_active = 1");
         $stmt->execute(['slug' => $slug]);
         return $stmt->fetch() ?: null;
     }
     
-    public function getById(int $id): ?array {
+    public function getById($id) {
         $stmt = $this->db->prepare("SELECT * FROM games WHERE id = :id");
         $stmt->execute(['id' => $id]);
         return $stmt->fetch() ?: null;
     }
     
-    public function create(array $data): int {
+    public function create($data) {
         $data['slug'] = $this->createSlug($data['title']);
         
-        $stmt = $this->db->prepare("
-            INSERT INTO games (title, slug, description, developer, publisher, release_date, genre, platform, image_url)
-            VALUES (:title, :slug, :description, :developer, :publisher, :release_date, :genre, :platform, :image_url)
-        ");
+        $stmt = $this->db->prepare("INSERT INTO games (title, slug, description, developer, publisher, release_date, genre, platform, image_url) VALUES (:title, :slug, :description, :developer, :publisher, :release_date, :genre, :platform, :image_url)");
         
         $stmt->execute([
             'title' => $data['title'],
@@ -54,16 +46,10 @@ class Game {
         return (int)$this->db->lastInsertId();
     }
     
-    public function update(int $id, array $data): bool {
+    public function update($id, $data) {
         $data['slug'] = $this->createSlug($data['title'], $id);
         
-        $stmt = $this->db->prepare("
-            UPDATE games 
-            SET title = :title, slug = :slug, description = :description, 
-                developer = :developer, publisher = :publisher, release_date = :release_date,
-                genre = :genre, platform = :platform, image_url = :image_url
-            WHERE id = :id
-        ");
+        $stmt = $this->db->prepare("UPDATE games SET title = :title, slug = :slug, description = :description, developer = :developer, publisher = :publisher, release_date = :release_date, genre = :genre, platform = :platform, image_url = :image_url WHERE id = :id");
         
         return $stmt->execute([
             'id' => $id,
@@ -79,12 +65,12 @@ class Game {
         ]);
     }
     
-    public function delete(int $id): bool {
+    public function delete($id) {
         $stmt = $this->db->prepare("UPDATE games SET is_active = 0 WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
     
-    private function createSlug(string $title, ?int $excludeId = null): string {
+    private function createSlug($title, $excludeId = null) {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
         
         $sql = "SELECT COUNT(*) FROM games WHERE slug = :slug";

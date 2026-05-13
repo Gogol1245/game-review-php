@@ -1,11 +1,18 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../classes/Database.php';
-require_once __DIR__ . '/../../classes/Game.php';
+require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../classes/Session.php';
+require_once __DIR__ . '/../../classes/Game.php';
 
 Session::start();
-Session::requireLogin();
+
+if (!Session::isLoggedIn()) {
+    header('Location: /game-review-site/admin/login.php');
+    exit;
+}
 
 $game = new Game();
 $games = $game->getAll(100);
@@ -13,32 +20,41 @@ $games = $game->getAll(100);
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<h1>Správa hier</h1>
-<a href="/admin/games/create.php" class="btn">Pridať novú hru</a>
-<a href="/admin/" class="btn">Späť na admin</a>
-
-<table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
-    <thead>
-        <tr style="background: #f5f5f5;">
-            <th style="padding: 10px; text-align: left;">ID</th>
-            <th style="padding: 10px; text-align: left;">Názov</th>
-            <th style="padding: 10px; text-align: left;">Žáner</th>
-            <th style="padding: 10px; text-align: left;">Akcie</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php foreach ($games as $game): ?>
-        <tr>
-            <td style="padding: 10px;"><?= $game['id'] ?></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($game['title']) ?></td>
-            <td style="padding: 10px;"><?= htmlspecialchars($game['genre']) ?></td>
-            <td style="padding: 10px;">
-                <a href="/admin/games/edit.php?id=<?= $game['id'] ?>">Upraviť</a>
-                <a href="/admin/games/delete.php?id=<?= $game['id'] ?>" onclick="return confirm('Naozaj chcete vymazať túto hru?')">Vymazať</a>
-            </td>
-        </tr>
-        <?php endforeach; ?>
-    </tbody>
-</table>
+<div class="content-box">
+    <h1>🎮 Správa hier</h1>
+    <a href="/game-review-site/admin/games/create.php" class="btn">➕ Pridať novú hru</a>
+    <a href="/game-review-site/admin/index.php" class="btn">← Späť na admin</a>
+    <a href="/game-review-site/index.php" class="btn">🏠 Domov</a>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Názov</th>
+                <th>Žáner</th>
+                <th>Platforma</th>
+                <th>Akcie</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($games)): ?>
+                <tr><td colspan="5" style="text-align:center;">Zatiaľ nie sú pridané žiadne hry.</td></tr>
+            <?php else: ?>
+                <?php foreach ($games as $g): ?>
+                <tr>
+                    <td><?= $g['id'] ?></td>
+                    <td><a href="/game-review-site/game.php?slug=<?= e($g['slug']) ?>"><?= e($g['title']) ?></a></td>
+                    <td><?= e($g['genre']) ?></td>
+                    <td><?= e($g['platform']) ?></td>
+                    <td>
+                        <a href="/game-review-site/admin/games/edit.php?id=<?= $g['id'] ?>" class="btn">✏️ Upraviť</a>
+                        <a href="/game-review-site/admin/games/delete.php?id=<?= $g['id'] ?>" class="btn" onclick="return confirm('Naozaj chcete vymazať?')" style="background:#ff4444;">🗑️ Vymazať</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

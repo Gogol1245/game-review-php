@@ -1,8 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 require_once __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../classes/Database.php';
-require_once __DIR__ . '/../../classes/Game.php';
+require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../classes/Session.php';
+require_once __DIR__ . '/../../classes/Game.php';
 
 Session::start();
 Session::requireLogin();
@@ -14,7 +17,7 @@ $id = $_GET['id'] ?? 0;
 $game = $gameClass->getById((int)$id);
 
 if (!$game) {
-    header('Location: /admin/games/');
+    header('Location: index.php');
     exit;
 }
 
@@ -34,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Názov hry je povinný.';
     } else {
         if ($gameClass->update((int)$id, $data)) {
-            header('Location: /admin/games/');
+            header('Location: index.php');
             exit;
         } else {
             $message = 'Chyba pri aktualizácii hry.';
@@ -45,39 +48,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require_once __DIR__ . '/../../includes/header.php';
 ?>
 
-<h1>Upraviť hru: <?= htmlspecialchars($game['title']) ?></h1>
+<h1>Upraviť hru: <?= e($game['title']) ?></h1>
 
 <?php if ($message): ?>
-    <p style="color: red;"><?= htmlspecialchars($message) ?></p>
+    <p style="color:red; background:#ffe6e6; padding:10px;"><?= e($message) ?></p>
 <?php endif; ?>
 
 <form method="POST" class="admin-form">
     <label>Názov hry *</label>
-    <input type="text" name="title" value="<?= htmlspecialchars($game['title']) ?>" required>
+    <input type="text" name="title" value="<?= e($game['title']) ?>" required>
     
     <label>Popis</label>
-    <textarea name="description" rows="5"><?= htmlspecialchars($game['description']) ?></textarea>
+    <textarea name="description" rows="5"><?= e($game['description']) ?></textarea>
     
     <label>Vývojár</label>
-    <input type="text" name="developer" value="<?= htmlspecialchars($game['developer']) ?>">
+    <input type="text" name="developer" value="<?= e($game['developer']) ?>">
     
     <label>Vydavateľ</label>
-    <input type="text" name="publisher" value="<?= htmlspecialchars($game['publisher']) ?>">
+    <input type="text" name="publisher" value="<?= e($game['publisher']) ?>">
     
     <label>Dátum vydania</label>
-    <input type="date" name="release_date" value="<?= htmlspecialchars($game['release_date']) ?>">
+    <input type="date" name="release_date" value="<?= e($game['release_date']) ?>">
     
     <label>Žáner</label>
-    <input type="text" name="genre" value="<?= htmlspecialchars($game['genre']) ?>">
+    <input type="text" name="genre" value="<?= e($game['genre']) ?>">
     
     <label>Platforma</label>
-    <input type="text" name="platform" value="<?= htmlspecialchars($game['platform']) ?>">
+    <input type="text" name="platform" value="<?= e($game['platform']) ?>">
     
     <label>URL obrázka</label>
-    <input type="url" name="image_url" value="<?= htmlspecialchars($game['image_url']) ?>">
+    <input type="url" name="image_url" value="<?= e($game['image_url']) ?>">
     
     <button type="submit" class="btn">Uložiť zmeny</button>
-    <a href="/admin/games/" class="btn">Späť</a>
+    <a href="index.php" class="btn">Späť</a>
 </form>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
