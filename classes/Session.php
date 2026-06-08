@@ -33,10 +33,23 @@ class Session {
     public static function isLoggedIn() {
         return self::get('user_id') !== null;
     }
+
+    public static function isAdmin() {
+        return self::get('role') === 'admin';
+    }
     
     public static function requireLogin() {
         if (!self::isLoggedIn()) {
-            header('Location: login.php');
+            header('Location: /game-review-php-main/admin/login.php');
+            exit;
+        }
+    }
+
+    public static function requireAdmin() {
+        self::requireLogin();
+
+        if (!self::isAdmin()) {
+            header('Location: /game-review-php-main/admin/index.php');
             exit;
         }
     }

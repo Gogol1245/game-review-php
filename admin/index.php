@@ -7,24 +7,27 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../classes/Session.php';
 
 Session::start();
-
-// If not logged in, redirect to login
-if (!Session::isLoggedIn()) {
-    header('Location: /game-review-site/admin/login.php');
-    exit;
-}
+Session::requireLogin();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="content-box">
-    <h1>🔧 Administrácia</h1>
+    <h1>Administrácia</h1>
     <p>Vitajte, <strong><?= e(Session::get('username')) ?></strong>!</p>
-    
-    <div style="margin-top: 30px;">
-        <a href="/game-review-site/admin/games/index.php" class="btn">🎮 Spravovať hry</a>
-        <a href="/game-review-site/admin/logout.php" class="btn">🚪 Odhlásiť sa</a>
-        <a href="/game-review-site/index.php" class="btn">🏠 Prejsť na web</a>
+
+    <?php if (!Session::isAdmin()): ?>
+        <p style="background:#f9f9f9; padding:15px; border-radius:8px; margin-top:20px;">
+            Ste prihlásený ako používateľ. Môžete písať recenzie k existujúcim hrám, ale nemôžete pridávať, upravovať ani mazať hry.
+        </p>
+    <?php endif; ?>
+
+    <div style="margin-top:30px;">
+        <?php if (Session::isAdmin()): ?>
+            <a href="/game-review-php-main/admin/games/index.php" class="btn">Spravovať hry</a>
+        <?php endif; ?>
+        <a href="/game-review-php-main/index.php" class="btn">Prejsť na web</a>
+        <a href="/game-review-php-main/admin/logout.php" class="btn">Odhlásiť sa</a>
     </div>
 </div>
 

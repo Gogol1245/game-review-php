@@ -9,10 +9,7 @@ require_once __DIR__ . '/../../classes/Game.php';
 
 Session::start();
 
-if (!Session::isLoggedIn()) {
-    header('Location: /game-review-site/admin/login.php');
-    exit;
-}
+Session::requireAdmin();
 
 $game = new Game();
 $message = '';
@@ -34,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $id = $game->create($data);
         if ($id) {
-            header('Location: /game-review-site/admin/games/index.php');
+            header('Location: /game-review-php-main/admin/games/index.php');
             exit;
         } else {
             $message = 'Chyba pri vytváraní hry.';
@@ -78,7 +75,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <input type="url" name="image_url" placeholder="https://example.com/image.jpg">
         
         <button type="submit" class="btn">✅ Vytvoriť hru</button>
-        <a href="/game-review-site/admin/games/index.php" class="btn">← Späť</a>
+        <a href="/game-review-php-main/admin/games/index.php" class="btn">← Späť</a>
     </form>
 </div>
 

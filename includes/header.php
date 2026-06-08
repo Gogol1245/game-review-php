@@ -38,10 +38,10 @@
     <header>
         <div class="container">
             <nav>
-                <a href="/game-review-site/index.php">🎮 Game Reviews</a>
+                <a href="/game-review-php-main/index.php">🎮 Game Reviews</a>
                 <div>
-                    <a href="/game-review-site/index.php">🏠 Domov</a>
-                    <a href="/game-review-site/admin/index.php">🔑 Administrácia</a>
+                    <a href="/game-review-php-main/index.php">🏠 Domov</a>
+                    <a href="/game-review-php-main/admin/index.php">🔑 Administrácia</a>
                 </div>
             </nav>
         </div>

@@ -10,7 +10,7 @@ Session::start();
 
 // If already logged in, go to admin
 if (Session::isLoggedIn()) {
-    header('Location: /game-review-site/admin/index.php');
+    header('Location: /game-review-php-main/admin/index.php');
     exit;
 }
 
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Session::set('username', $authenticated['username']);
             Session::set('role', $authenticated['role']);
             
-            header('Location: /game-review-site/admin/index.php');
+            header('Location: /game-review-php-main/admin/index.php');
             exit;
         } else {
             $error = 'Nesprávne prihlasovacie údaje.';
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="password" name="password" placeholder="Heslo" required>
             <button type="submit">Prihlásiť sa</button>
         </form>
-        <p style="margin-top:15px; text-align:center;"><a href="/game-review-site/index.php">← Späť na hlavnú stránku</a></p>
+        <p style="margin-top:15px; text-align:center;"><a href="/game-review-php-main/index.php">← Späť na hlavnú stránku</a></p>
     </div>
 </body>
 </html>

@@ -15,62 +15,75 @@ $slug = $_GET['slug'] ?? '';
 $message = '';
 $messageType = '';
 
-// Handle review submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
-    $gameId = $_POST['game_id'] ?? 0;
-    $title = $_POST['review_title'] ?? '';
-    $content = $_POST['review_content'] ?? '';
-    $score = $_POST['score'] ?? 0;
-    $username = $_POST['username'] ?? 'Anonymous';
-    
-    if (empty($title) || empty($content) || $score < 1 || $score > 10) {
-        $message = 'Vyplňte všetky polia a zadajte hodnotenie 1-10.';
-        $messageType = 'error';
-    } else {
-        try {
-            $db = Database::getInstance()->getConnection();
-            
-            // Create/get user
-            $stmt = $db->prepare("SELECT id FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
-            
-            if (!$user) {
-                // Create new user
-                $stmt = $db->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'editor')");
-                $stmt->execute([$username, $username . '@temp.com', password_hash('temp123', PASSWORD_DEFAULT)]);
-                $userId = $db->lastInsertId();
-            } else {
-                $userId = $user['id'];
-            }
-            
-            // Insert review
-            $stmt = $db->prepare("INSERT INTO reviews (game_id, user_id, title, content, score, pros, cons, is_published) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
-            $stmt->execute([$gameId, $userId, $title, $content, $score, $_POST['pros'] ?? '', $_POST['cons'] ?? '']);
-            
-            $message = '✅ Vaša recenzia bola úspešne pridaná!';
-            $messageType = 'success';
-        } catch (Exception $e) {
-            $message = 'Chyba pri ukladaní recenzie: ' . $e->getMessage();
-            $messageType = 'error';
-        }
-    }
-}
-
 if (empty($slug)) {
-    header('Location: /game-review-site/index.php');
+    header('Location: /game-review-php-main/index.php');
     exit;
 }
 
 $game = $gameClass->getBySlug($slug);
 
 if (!$game) {
+    require_once __DIR__ . '/includes/header.php';
     echo '<div class="content-box">';
-    echo '<h1>❌ Hra nebola nájdená</h1>';
-    echo '<p><a href="/game-review-site/index.php">← Späť na hlavnú stránku</a></p>';
+    echo '<h1>Hra nebola nájdená</h1>';
+    echo '<p><a href="/game-review-php-main/index.php">Späť na hlavnú stránku</a></p>';
     echo '</div>';
     require_once __DIR__ . '/includes/footer.php';
     exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
+    if (!Session::isLoggedIn()) {
+        header('Location: /game-review-php-main/admin/login.php');
+        exit;
+    }
+
+    $title = trim($_POST['review_title'] ?? '');
+    $content = trim($_POST['review_content'] ?? '');
+    $score = (int)($_POST['score'] ?? 0);
+    $pros = trim($_POST['pros'] ?? '');
+    $cons = trim($_POST['cons'] ?? '');
+
+    if ($title === '' || $content === '' || $score < 1 || $score > 10) {
+        $message = 'Vyplňte všetky povinné polia a zadajte hodnotenie 1-10.';
+        $messageType = 'error';
+    } else {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            $stmt = $db->prepare("
+                INSERT INTO reviews (game_id, user_id, title, content, score, pros, cons, is_published)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+            ");
+            $stmt->execute([
+                $game['id'],
+                Session::get('user_id'),
+                $title,
+                $content,
+                $score,
+                $pros,
+                $cons
+            ]);
+
+            $stmt = $db->prepare("
+                UPDATE games
+                SET rating = (
+                    SELECT ROUND(AVG(score), 1)
+                    FROM reviews
+                    WHERE game_id = ? AND is_published = 1
+                )
+                WHERE id = ?
+            ");
+            $stmt->execute([$game['id'], $game['id']]);
+
+            $message = 'Vaša recenzia bola úspešne pridaná.';
+            $messageType = 'success';
+            $game = $gameClass->getBySlug($slug);
+        } catch (Exception $e) {
+            $message = 'Chyba pri ukladaní recenzie: ' . $e->getMessage();
+            $messageType = 'error';
+        }
+    }
 }
 
 $reviews = $reviewClass->getByGameId($game['id']);
@@ -79,95 +92,94 @@ require_once __DIR__ . '/includes/header.php';
 
 <div class="content-box">
     <h1><?= e($game['title']) ?></h1>
-    
-    <?php if ($game['image_url']): ?>
-        <img src="<?= e($game['image_url']) ?>" alt="<?= e($game['title']) ?>" style="max-width:100%; height:auto; margin:20px 0; border-radius:8px;">
+
+    <?php if (!empty($game['image_url'])): ?>
+        <img src="<?= e($game['image_url']) ?>" alt="<?= e($game['title']) ?>" style="width:100%; max-height:420px; object-fit:cover; margin:20px 0; border-radius:8px;">
     <?php endif; ?>
-    
+
     <div style="background:#f9f9f9; padding:20px; margin:20px 0; border-radius:8px;">
-        <p><strong>🎮 Vývojár:</strong> <?= e($game['developer']) ?></p>
-        <p><strong>📦 Vydavateľ:</strong> <?= e($game['publisher']) ?></p>
-        <p><strong>📅 Dátum vydania:</strong> <?= formatDate($game['release_date']) ?></p>
-        <p><strong>🎯 Žáner:</strong> <?= e($game['genre']) ?></p>
-        <p><strong>💻 Platforma:</strong> <?= e($game['platform']) ?></p>
+        <p><strong>Vývojár:</strong> <?= e($game['developer']) ?></p>
+        <p><strong>Vydavateľ:</strong> <?= e($game['publisher']) ?></p>
+        <p><strong>Dátum vydania:</strong> <?= formatDate($game['release_date']) ?></p>
+        <p><strong>Žáner:</strong> <?= e($game['genre']) ?></p>
+        <p><strong>Platforma:</strong> <?= e($game['platform']) ?></p>
         <?php if ($game['rating'] > 0): ?>
-            <p><strong>⭐ Priemerné hodnotenie:</strong> <?= $game['rating'] ?>/10</p>
+            <p><strong>Priemerné hodnotenie:</strong> <?= e($game['rating']) ?>/10</p>
         <?php endif; ?>
     </div>
-    
-    <h2>📝 Popis hry</h2>
+
+    <h2>Popis hry</h2>
     <p><?= nl2br(e($game['description'])) ?></p>
 </div>
 
-<!-- Reviews Section -->
 <div class="content-box" style="margin-top:20px;">
-    <h2>⭐ Užívateľské recenzie (<?= count($reviews) ?>)</h2>
-    
+    <h2>Užívateľské recenzie (<?= count($reviews) ?>)</h2>
+
     <?php if (empty($reviews)): ?>
         <p>Zatiaľ neboli pridané žiadne recenzie. Buďte prvý!</p>
     <?php else: ?>
         <?php foreach ($reviews as $review): ?>
             <div style="border-bottom:2px solid #eee; padding:20px 0; margin:20px 0;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:20px;">
                     <h3 style="margin:0;"><?= e($review['title']) ?></h3>
-                    <span style="font-size:24px; color:#ffd700;"><?= renderStars($review['score']) ?></span>
+                    <span style="font-size:24px; color:#ffd700; white-space:nowrap;"><?= renderStars($review['score']) ?></span>
                 </div>
-                <p style="font-size:18px; font-weight:bold; color:#e94560; margin:10px 0;">Hodnotenie: <?= $review['score'] ?>/10</p>
+                <p style="font-size:18px; font-weight:bold; color:#e94560; margin:10px 0;">Hodnotenie: <?= e($review['score']) ?>/10</p>
                 <p><?= nl2br(e($review['content'])) ?></p>
                 <?php if (!empty($review['pros'])): ?>
-                    <p style="color:green;"><strong>👍 Plusy:</strong> <?= e($review['pros']) ?></p>
+                    <p style="color:green;"><strong>Plusy:</strong> <?= e($review['pros']) ?></p>
                 <?php endif; ?>
                 <?php if (!empty($review['cons'])): ?>
-                    <p style="color:red;"><strong>👎 Mínusy:</strong> <?= e($review['cons']) ?></p>
+                    <p style="color:red;"><strong>Mínusy:</strong> <?= e($review['cons']) ?></p>
                 <?php endif; ?>
-                <p><small>✍️ Autor: <?= e($review['username']) ?> | 📅 <?= formatDate($review['created_at']) ?></small></p>
+                <p><small>Autor: <?= e($review['username']) ?> | <?= formatDate($review['created_at']) ?></small></p>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
 
-<!-- Add Review Form -->
 <div class="content-box" style="margin-top:20px;">
-    <h2>✍️ Pridať recenziu</h2>
-    
+    <h2>Pridať recenziu</h2>
+
     <?php if ($message): ?>
         <div style="padding:15px; margin:15px 0; border-radius:8px; <?= $messageType === 'success' ? 'background:#d4edda; color:#155724; border:1px solid #c3e6cb;' : 'background:#f8d7da; color:#721c24; border:1px solid #f5c6cb;' ?>">
             <?= e($message) ?>
         </div>
     <?php endif; ?>
-    
-    <form method="POST" class="admin-form">
-        <input type="hidden" name="game_id" value="<?= $game['id'] ?>">
-        
-        <label>👤 Vaše meno</label>
-        <input type="text" name="username" placeholder="Zadajte vaše meno" required>
-        
-        <label>📝 Nadpis recenzie</label>
-        <input type="text" name="review_title" placeholder="Napíšte nadpis recenzie" required>
-        
-        <label>📄 Text recenzie</label>
-        <textarea name="review_content" rows="5" placeholder="Napíšte vašu recenziu..." required></textarea>
-        
-        <label>⭐ Hodnotenie (1-10)</label>
-        <div style="display:flex; gap:10px; margin:10px 0;">
-            <?php for ($i = 1; $i <= 10; $i++): ?>
-                <label style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
-                    <input type="radio" name="score" value="<?= $i ?>" required style="width:auto;">
-                    <span style="font-size:20px;"><?= $i ?></span>
-                </label>
-            <?php endfor; ?>
-        </div>
-        
-        <label>👍 Plusy (oddeľte čiarkou)</label>
-        <input type="text" name="pros" placeholder="Napíšte plusy hry">
-        
-        <label>👎 Mínusy (oddeľte čiarkou)</label>
-        <input type="text" name="cons" placeholder="Napíšte mínusy hry">
-        
-        <button type="submit" name="submit_review" class="btn" style="font-size:18px; padding:12px 24px;">✅ Odoslať recenziu</button>
-    </form>
+
+    <?php if (!Session::isLoggedIn()): ?>
+        <p>Na pridanie recenzie sa musíte prihlásiť.</p>
+        <a href="/game-review-php-main/admin/login.php" class="btn">Prihlásiť sa</a>
+    <?php else: ?>
+        <p>Recenziu pridávate ako <strong><?= e(Session::get('username')) ?></strong>.</p>
+        <form method="POST" class="admin-form">
+            <label>Nadpis recenzie</label>
+            <input type="text" name="review_title" placeholder="Napíšte nadpis recenzie" required>
+
+            <label>Text recenzie</label>
+            <textarea name="review_content" rows="5" placeholder="Napíšte vašu recenziu..." required></textarea>
+
+            <label>Hodnotenie (1-10)</label>
+            <div style="display:flex; gap:10px; margin:10px 0; flex-wrap:wrap;">
+                <?php for ($i = 1; $i <= 10; $i++): ?>
+                    <label style="display:flex; flex-direction:column; align-items:center; cursor:pointer;">
+                        <input type="radio" name="score" value="<?= $i ?>" required style="width:auto;">
+                        <span style="font-size:20px;"><?= $i ?></span>
+                    </label>
+                <?php endfor; ?>
+            </div>
+
+            <label>Plusy (oddeľte čiarkou)</label>
+            <input type="text" name="pros" placeholder="Napíšte plusy hry">
+
+            <label>Mínusy (oddeľte čiarkou)</label>
+            <input type="text" name="cons" placeholder="Napíšte mínusy hry">
+
+            <button type="submit" name="submit_review" class="btn" style="font-size:18px; padding:12px 24px;">Odoslať recenziu</button>
+        </form>
+    <?php endif; ?>
 </div>
 
-<p style="margin-top:20px;"><a href="/game-review-site/index.php" class="btn">← Späť na hlavnú stránku</a></p>
+<p style="margin-top:20px;"><a href="/game-review-php-main/index.php" class="btn">Späť na hlavnú stránku</a></p>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -8,5 +8,5 @@ require_once __DIR__ . '/../classes/Session.php';
 Session::start();
 Session::destroy();
 
-header('Location: /game-review-site/admin/login.php');
+header('Location: /game-review-php-main/admin/login.php');
 exit;

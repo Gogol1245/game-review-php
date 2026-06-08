@@ -8,7 +8,7 @@ require_once __DIR__ . '/../../classes/Session.php';
 require_once __DIR__ . '/../../classes/Game.php';
 
 Session::start();
-Session::requireLogin();
+Session::requireAdmin();
 
 $gameClass = new Game();
 $message = '';

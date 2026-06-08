@@ -9,10 +9,7 @@ require_once __DIR__ . '/../../classes/Game.php';
 
 Session::start();
 
-if (!Session::isLoggedIn()) {
-    header('Location: /game-review-site/admin/login.php');
-    exit;
-}
+Session::requireAdmin();
 
 $game = new Game();
 $games = $game->getAll(100);
@@ -22,9 +19,9 @@ require_once __DIR__ . '/../../includes/header.php';
 
 <div class="content-box">
     <h1>🎮 Správa hier</h1>
-    <a href="/game-review-site/admin/games/create.php" class="btn">➕ Pridať novú hru</a>
-    <a href="/game-review-site/admin/index.php" class="btn">← Späť na admin</a>
-    <a href="/game-review-site/index.php" class="btn">🏠 Domov</a>
+    <a href="/game-review-php-main/admin/games/create.php" class="btn">➕ Pridať novú hru</a>
+    <a href="/game-review-php-main/admin/index.php" class="btn">← Späť na admin</a>
+    <a href="/game-review-php-main/index.php" class="btn">🏠 Domov</a>
     
     <table>
         <thead>
@@ -43,12 +40,12 @@ require_once __DIR__ . '/../../includes/header.php';
                 <?php foreach ($games as $g): ?>
                 <tr>
                     <td><?= $g['id'] ?></td>
-                    <td><a href="/game-review-site/game.php?slug=<?= e($g['slug']) ?>"><?= e($g['title']) ?></a></td>
+                    <td><a href="/game-review-php-main/game.php?slug=<?= e($g['slug']) ?>"><?= e($g['title']) ?></a></td>
                     <td><?= e($g['genre']) ?></td>
                     <td><?= e($g['platform']) ?></td>
                     <td>
-                        <a href="/game-review-site/admin/games/edit.php?id=<?= $g['id'] ?>" class="btn">✏️ Upraviť</a>
-                        <a href="/game-review-site/admin/games/delete.php?id=<?= $g['id'] ?>" class="btn" onclick="return confirm('Naozaj chcete vymazať?')" style="background:#ff4444;">🗑️ Vymazať</a>
+                        <a href="/game-review-php-main/admin/games/edit.php?id=<?= $g['id'] ?>" class="btn">✏️ Upraviť</a>
+                        <a href="/game-review-php-main/admin/games/delete.php?id=<?= $g['id'] ?>" class="btn" onclick="return confirm('Naozaj chcete vymazať?')" style="background:#ff4444;">🗑️ Vymazať</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

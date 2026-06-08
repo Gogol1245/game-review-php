@@ -27,7 +27,7 @@ try {
     <h2>⭐ Najnovšie recenzie</h2>
     <?php if (empty($latestReviews)): ?>
         <div class="content-box">
-            <p>Zatiaľ nie sú k dispozícii žiadne recenzie. <a href="/game-review-site/admin/index.php">Pridajte prvú hru</a>.</p>
+            <p>Zatiaľ nie sú k dispozícii žiadne recenzie. <a href="/game-review-php-main/admin/index.php">Pridajte prvú hru</a>.</p>
         </div>
     <?php else: ?>
         <div class="games-grid">
@@ -35,7 +35,7 @@ try {
                 <div class="game-card">
                     <div class="game-card-content">
                         <h3>
-                            <a href="/game-review-site/game.php?slug=<?= e($rev['game_slug']) ?>">
+                            <a href="/game-review-php-main/game.php?slug=<?= e($rev['game_slug']) ?>">
                                 <?= e($rev['game_title']) ?>
                             </a>
                         </h3>
@@ -53,7 +53,7 @@ try {
     <h2>🎯 Všetky hry</h2>
     <?php if (empty($games)): ?>
         <div class="content-box">
-            <p>Zatiaľ nie sú k dispozícii žiadne hry. <a href="/game-review-site/admin/games/create.php">Pridajte prvú hru</a>.</p>
+            <p>Zatiaľ nie sú k dispozícii žiadne hry. <a href="/game-review-php-main/admin/games/create.php">Pridajte prvú hru</a>.</p>
         </div>
     <?php else: ?>
         <div class="games-grid">
@@ -66,7 +66,7 @@ try {
                     <?php endif; ?>
                     <div class="game-card-content">
                         <h3>
-                            <a href="/game-review-site/game.php?slug=<?= e($g['slug']) ?>">
+                            <a href="/game-review-php-main/game.php?slug=<?= e($g['slug']) ?>">
                                 <?= e($g['title']) ?>
                             </a>
                         </h3>
