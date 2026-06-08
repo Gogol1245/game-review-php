@@ -1,9 +1,10 @@
 RewriteEngine On
 RewriteBase /game-review-php-main/
 
-# If the request is not for a file or directory
+# Ha a kérés nem létező fájlra vagy mappára mutat,
+# akkor az Apache továbbadja az index.php fájlnak.
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Route everything to index.php
+# Egyszerű útvonalkezelés: minden ismeretlen URL az index.php-hez kerül.
 RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]

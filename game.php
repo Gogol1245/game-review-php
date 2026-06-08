@@ -1,26 +1,31 @@
 <?php
+// Fejlesztési hibakiírás.
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Betöltjük az osztályokat, segédfüggvényeket és a session kezelőt.
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/classes/Session.php';
 
+// Session szükséges, mert recenziót csak bejelentkezett felhasználó írhat.
 Session::start();
 
-$gameClass = new Game();
-$reviewClass = new Review();
+$gameModel = new Game();
+$reviewModel = new Review();
 
+// A slug az URL-ből érkezik, például game.php?slug=bloodborne.
 $slug = $_GET['slug'] ?? '';
 $message = '';
 $messageType = '';
 
-if (empty($slug)) {
+if ($slug === '') {
     header('Location: /game-review-php-main/index.php');
     exit;
 }
 
-$game = $gameClass->getBySlug($slug);
+// A játék lekérése slug alapján.
+$game = $gameModel->getBySlug($slug);
 
 if (!$game) {
     require_once __DIR__ . '/includes/header.php';
@@ -32,53 +37,30 @@ if (!$game) {
     exit;
 }
 
+// Recenzió űrlap feldolgozása.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     if (!Session::isLoggedIn()) {
         header('Location: /game-review-php-main/admin/login.php');
         exit;
     }
 
-    $title = trim($_POST['review_title'] ?? '');
-    $content = trim($_POST['review_content'] ?? '');
+    $title = cleanText($_POST['review_title'] ?? '');
+    $content = cleanText($_POST['review_content'] ?? '');
     $score = (int)($_POST['score'] ?? 0);
-    $pros = trim($_POST['pros'] ?? '');
-    $cons = trim($_POST['cons'] ?? '');
+    $pros = cleanText($_POST['pros'] ?? '');
+    $cons = cleanText($_POST['cons'] ?? '');
 
     if ($title === '' || $content === '' || $score < 1 || $score > 10) {
         $message = 'Vyplňte všetky povinné polia a zadajte hodnotenie 1-10.';
         $messageType = 'error';
     } else {
         try {
-            $db = Database::getInstance()->getConnection();
-
-            $stmt = $db->prepare("
-                INSERT INTO reviews (game_id, user_id, title, content, score, pros, cons, is_published)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-            ");
-            $stmt->execute([
-                $game['id'],
-                Session::get('user_id'),
-                $title,
-                $content,
-                $score,
-                $pros,
-                $cons
-            ]);
-
-            $stmt = $db->prepare("
-                UPDATE games
-                SET rating = (
-                    SELECT ROUND(AVG(score), 1)
-                    FROM reviews
-                    WHERE game_id = ? AND is_published = 1
-                )
-                WHERE id = ?
-            ");
-            $stmt->execute([$game['id'], $game['id']]);
+            // A Review osztály menti a recenziót és frissíti a játék átlagértékelését.
+            $reviewModel->create($game['id'], Session::get('user_id'), $title, $content, $score, $pros, $cons);
 
             $message = 'Vaša recenzia bola úspešne pridaná.';
             $messageType = 'success';
-            $game = $gameClass->getBySlug($slug);
+            $game = $gameModel->getBySlug($slug);
         } catch (Exception $e) {
             $message = 'Chyba pri ukladaní recenzie: ' . $e->getMessage();
             $messageType = 'error';
@@ -86,7 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     }
 }
 
-$reviews = $reviewClass->getByGameId($game['id']);
+// A játékhoz tartozó recenziók lekérése megjelenítéshez.
+$reviews = $reviewModel->getByGameId($game['id']);
 require_once __DIR__ . '/includes/header.php';
 ?>
 
@@ -118,6 +101,7 @@ require_once __DIR__ . '/includes/header.php';
     <?php if (empty($reviews)): ?>
         <p>Zatiaľ neboli pridané žiadne recenzie. Buďte prvý!</p>
     <?php else: ?>
+        <!-- Minden recenzió külön blokkban jelenik meg. -->
         <?php foreach ($reviews as $review): ?>
             <div style="border-bottom:2px solid #eee; padding:20px 0; margin:20px 0;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:20px;">

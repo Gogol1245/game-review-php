@@ -1,12 +1,22 @@
 <?php
-class Review {
+
+// A Review osztály a felhasználói recenziók lekérését és mentését kezeli.
+// A játék átlagértékelését is itt frissítjük, mert az értékelésekből számolódik.
+class Review
+{
+    // PDO adatbázis-kapcsolat.
     private $db;
-    
-    public function __construct() {
+
+    // Konstruktor: elkéri a közös adatbázis-kapcsolatot.
+    public function __construct()
+    {
         $this->db = Database::getInstance()->getConnection();
     }
-    
-    public function getByGameId($gameId) {
+
+    // Egy játékhoz tartozó publikus recenziók lekérése.
+    // Az SQL összekapcsolja a reviews és users táblát, hogy a szerző neve is megjelenjen.
+    public function getByGameId($gameId)
+    {
         $stmt = $this->db->prepare("
             SELECT r.*, u.username 
             FROM reviews r 
@@ -15,10 +25,14 @@ class Review {
             ORDER BY r.created_at DESC
         ");
         $stmt->execute(['game_id' => $gameId]);
+
         return $stmt->fetchAll();
     }
-    
-    public function getLatest($limit = 5) {
+
+    // Legfrissebb recenziók lekérése a főoldalra.
+    // Itt a játék címét és slugját is lekérjük, hogy linkelni lehessen a játék oldalára.
+    public function getLatest($limit = 5)
+    {
         $stmt = $this->db->prepare("
             SELECT r.*, g.title as game_title, g.slug as game_slug, u.username 
             FROM reviews r 
@@ -32,43 +46,53 @@ class Review {
         $stmt->execute();
         return $stmt->fetchAll();
     }
-    
-    public function addReview($gameId, $username, $title, $content, $score, $pros = '', $cons = '') {
-        try {
-            // Get or create user
-            $stmt = $this->db->prepare("SELECT id FROM users WHERE username = ?");
-            $stmt->execute([$username]);
-            $user = $stmt->fetch();
-            
-            if (!$user) {
-                $stmt = $this->db->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'editor')");
-                $stmt->execute([$username, $username . '@temp.com', password_hash(bin2hex(random_bytes(8)), PASSWORD_DEFAULT)]);
-                $userId = $this->db->lastInsertId();
-            } else {
-                $userId = $user['id'];
-            }
-            
-            // Insert review
-            $stmt = $this->db->prepare("INSERT INTO reviews (game_id, user_id, title, content, score, pros, cons, is_published) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
-            $stmt->execute([$gameId, $userId, $title, $content, $score, $pros, $cons]);
-            
-            // Update game average rating
-            $this->updateGameRating($gameId);
-            
-            return $this->db->lastInsertId();
-        } catch (Exception $e) {
-            return false;
-        }
+
+    // Új recenzió mentése bejelentkezett felhasználótól.
+    // Prepared statementet használunk, ezért a felhasználói szöveg nem kerülhet közvetlenül az SQL-be.
+    public function create($gameId, $userId, $title, $content, $score, $pros = '', $cons = '')
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO reviews
+                (game_id, user_id, title, content, score, pros, cons, is_published)
+            VALUES
+                (:game_id, :user_id, :title, :content, :score, :pros, :cons, 1)
+        ");
+
+        $stmt->execute([
+            'game_id' => (int)$gameId,
+            'user_id' => (int)$userId,
+            'title' => trim($title),
+            'content' => trim($content),
+            'score' => (int)$score,
+            'pros' => trim($pros),
+            'cons' => trim($cons),
+        ]);
+
+        $this->updateGameRating($gameId);
+
+        return (int)$this->db->lastInsertId();
     }
-    
-    private function updateGameRating($gameId) {
-        $stmt = $this->db->prepare("SELECT AVG(score) as avg_rating FROM reviews WHERE game_id = ? AND is_published = 1");
+
+    // Játék átlagértékelésének frissítése.
+    // Az SQL a published recenziók pontszámából számolja az átlagot.
+    private function updateGameRating($gameId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT AVG(score) as avg_rating
+            FROM reviews
+            WHERE game_id = ? AND is_published = 1
+        ");
         $stmt->execute([$gameId]);
         $result = $stmt->fetch();
-        
+
         $avgRating = $result['avg_rating'] ? round($result['avg_rating'], 1) : 0;
-        
-        $stmt = $this->db->prepare("UPDATE games SET rating = ? WHERE id = ?");
+
+        // Az átlagot a games táblában is tároljuk, hogy a főoldalon gyorsan kiírható legyen.
+        $stmt = $this->db->prepare("
+            UPDATE games
+            SET rating = ?
+            WHERE id = ?
+        ");
         $stmt->execute([$avgRating, $gameId]);
     }
 }

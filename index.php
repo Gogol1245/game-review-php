@@ -1,20 +1,25 @@
 <?php
+// Fejlesztés közben minden PHP hibát megjelenítünk, hogy könnyebb legyen javítani.
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Az autoload betölti a classes mappában lévő osztályokat.
+// A functions.php a közös segédfüggvényeket adja, a header pedig az oldal tetejét és a CSS-t.
 require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/header.php';
 
 try {
-    $game = new Game();
-    $review = new Review();
-    $games = $game->getAll();
-    $latestReviews = $review->getLatest();
+    // A főoldalon csak a legújabb játékokból mutatunk egy rövid válogatást.
+    // A teljes játéklista külön oldalon van: games.php.
+    $gameModel = new Game();
+    $reviewModel = new Review();
+    $games = $gameModel->getAll(6);
+    $latestReviews = $reviewModel->getLatest();
 } catch (Exception $e) {
     echo '<div style="color:red; padding:20px; background:#ffe6e6; border:1px solid red; margin:20px 0;">';
     echo '<h2>Database Error</h2>';
-    echo '<p>' . $e->getMessage() . '</p>';
+    echo '<p>' . e($e->getMessage()) . '</p>';
     echo '</div>';
     require_once __DIR__ . '/includes/footer.php';
     exit;
@@ -31,17 +36,18 @@ try {
         </div>
     <?php else: ?>
         <div class="games-grid">
-            <?php foreach ($latestReviews as $rev): ?>
+            <!-- A foreach minden legfrissebb recenzióból egy kártyát készít. -->
+            <?php foreach ($latestReviews as $review): ?>
                 <div class="game-card">
                     <div class="game-card-content">
                         <h3>
-                            <a href="/game-review-php-main/game.php?slug=<?= e($rev['game_slug']) ?>">
-                                <?= e($rev['game_title']) ?>
+                            <a href="/game-review-php-main/game.php?slug=<?= e($review['game_slug']) ?>">
+                                <?= e($review['game_title']) ?>
                             </a>
                         </h3>
-                        <p><strong><?= e($rev['title']) ?></strong></p>
-                        <p class="rating">Hodnotenie: <?= $rev['score'] ?>/10</p>
-                        <p><small>Autor: <?= e($rev['username']) ?></small></p>
+                        <p><strong><?= e($review['title']) ?></strong></p>
+                        <p class="rating">Hodnotenie: <?= e($review['score']) ?>/10</p>
+                        <p><small>Autor: <?= e($review['username']) ?></small></p>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -50,35 +56,41 @@ try {
 </section>
 
 <section>
-    <h2>🎯 Všetky hry</h2>
+    <h2>🎯 Najnovšie hry</h2>
     <?php if (empty($games)): ?>
         <div class="content-box">
             <p>Zatiaľ nie sú k dispozícii žiadne hry. <a href="/game-review-php-main/admin/games/create.php">Pridajte prvú hru</a>.</p>
         </div>
     <?php else: ?>
         <div class="games-grid">
-            <?php foreach ($games as $g): ?>
+            <!-- Ez csak főoldali rövid lista. Az összes játék a Játékok menüpontban található. -->
+            <?php foreach ($games as $game): ?>
                 <div class="game-card">
-                    <?php if ($g['image_url']): ?>
-                        <img src="<?= e($g['image_url']) ?>" alt="<?= e($g['title']) ?>">
+                    <?php if ($game['image_url']): ?>
+                        <img src="<?= e($game['image_url']) ?>" alt="<?= e($game['title']) ?>">
                     <?php else: ?>
                         <div style="height:200px; background:#1a1a2e; display:flex; align-items:center; justify-content:center; color:white; font-size:48px;">🎮</div>
                     <?php endif; ?>
+
                     <div class="game-card-content">
                         <h3>
-                            <a href="/game-review-php-main/game.php?slug=<?= e($g['slug']) ?>">
-                                <?= e($g['title']) ?>
+                            <a href="/game-review-php-main/game.php?slug=<?= e($game['slug']) ?>">
+                                <?= e($game['title']) ?>
                             </a>
                         </h3>
-                        <p><strong>Žáner:</strong> <?= e($g['genre']) ?></p>
-                        <p><strong>Platforma:</strong> <?= e($g['platform']) ?></p>
-                        <?php if ($g['rating'] > 0): ?>
-                            <p class="rating">Hodnotenie: <?= $g['rating'] ?>/10</p>
+                        <p><strong>Žáner:</strong> <?= e($game['genre']) ?></p>
+                        <p><strong>Platforma:</strong> <?= e($game['platform']) ?></p>
+                        <?php if ($game['rating'] > 0): ?>
+                            <p class="rating">Hodnotenie: <?= e($game['rating']) ?>/10</p>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
+
+        <p>
+            <a href="/game-review-php-main/games.php" class="btn">Všetky hry</a>
+        </p>
     <?php endif; ?>
 </section>
 
