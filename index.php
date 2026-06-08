@@ -1,7 +1,4 @@
 <?php
-// Fejlesztés közben minden PHP hibát megjelenítünk, hogy könnyebb legyen javítani.
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 // Az autoload betölti a classes mappában lévő osztályokat.
 // A functions.php a közös segédfüggvényeket adja, a header pedig az oldal tetejét és a CSS-t.

@@ -1,7 +1,4 @@
 <?php
-// Fejlesztési hibakiírás.
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 // Betöltjük az autoloadot, a session kezelőt és a User osztályt.
 require_once __DIR__ . '/../vendor/autoload.php';

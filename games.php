@@ -1,7 +1,4 @@
 <?php
-// Fejlesztés közben minden PHP hibát megjelenítünk.
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 // Betöltjük az osztályokat, a közös függvényeket és az oldal fejlécét.
 require_once __DIR__ . '/vendor/autoload.php';
