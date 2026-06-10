@@ -62,26 +62,7 @@ try {
         <div class="games-grid">
             <!-- Ez csak főoldali rövid lista. Az összes játék a Játékok menüpontban található. -->
             <?php foreach ($games as $game): ?>
-                <div class="game-card">
-                    <?php if ($game['image_url']): ?>
-                        <img src="<?= e($game['image_url']) ?>" alt="<?= e($game['title']) ?>">
-                    <?php else: ?>
-                        <div style="height:200px; background:#1a1a2e; display:flex; align-items:center; justify-content:center; color:white; font-size:48px;">🎮</div>
-                    <?php endif; ?>
-
-                    <div class="game-card-content">
-                        <h3>
-                            <a href="/game-review-php-main/game.php?slug=<?= e($game['slug']) ?>">
-                                <?= e($game['title']) ?>
-                            </a>
-                        </h3>
-                        <p><strong>Žáner:</strong> <?= e($game['genre']) ?></p>
-                        <p><strong>Platforma:</strong> <?= e($game['platform']) ?></p>
-                        <?php if ($game['rating'] > 0): ?>
-                            <p class="rating">Hodnotenie: <?= e($game['rating']) ?>/10</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
+                <?php renderGameCard($game); ?>
             <?php endforeach; ?>
         </div>
 

@@ -85,3 +85,32 @@ function validateGameData($data)
 
     return $errors;
 }
+
+// Egy játék kártyájának kirajzolása.
+// Azért van külön függvényben, mert a főoldal és a teljes játéklista ugyanazt a kártya HTML-t használja.
+// Így ha később változtatni kell a játékok megjelenésén, elég ezt az egy függvényt módosítani.
+function renderGameCard($game)
+{
+    ?>
+    <div class="game-card">
+        <?php if (!empty($game['image_url'])): ?>
+            <img src="<?= e($game['image_url']) ?>" alt="<?= e($game['title']) ?>">
+        <?php else: ?>
+            <div style="height:200px; background:#1a1a2e; display:flex; align-items:center; justify-content:center; color:white; font-size:48px;">🎮</div>
+        <?php endif; ?>
+
+        <div class="game-card-content">
+            <h3>
+                <a href="/game-review-php-main/game.php?slug=<?= e($game['slug']) ?>">
+                    <?= e($game['title']) ?>
+                </a>
+            </h3>
+            <p><strong>Žáner:</strong> <?= e($game['genre']) ?></p>
+            <p><strong>Platforma:</strong> <?= e($game['platform']) ?></p>
+            <?php if ($game['rating'] > 0): ?>
+                <p class="rating">Hodnotenie: <?= e($game['rating']) ?>/10</p>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
+}
