@@ -46,7 +46,14 @@ require_once __DIR__ . '/../../includes/header.php';
                         <td><?= e($game['platform']) ?></td>
                         <td>
                             <a href="/game-review-php-main/admin/games/edit.php?id=<?= e($game['id']) ?>" class="btn">✏️ Upraviť</a>
-                            <a href="/game-review-php-main/admin/games/delete.php?id=<?= e($game['id']) ?>" class="btn" onclick="return confirm('Naozaj chcete vymazať?')" style="background:#ff4444;">🗑️ Vymazať</a>
+                            <!--
+                                A törlés POST űrlappal történik, nem sima linkkel.
+                                Így egy véletlen linkmegnyitás nem tud adatot módosítani.
+                            -->
+                            <form method="POST" action="/game-review-php-main/admin/games/delete.php" style="display:inline;" onsubmit="return confirm('Naozaj chcete vymazať?')">
+                                <input type="hidden" name="id" value="<?= e($game['id']) ?>">
+                                <button type="submit" class="btn" style="background:#ff4444;">🗑️ Vymazať</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>

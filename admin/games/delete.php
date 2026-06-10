@@ -10,10 +10,11 @@ Session::start();
 Session::requireAdmin();
 
 $gameModel = new Game();
-$gameId = (int)($_GET['id'] ?? 0);
+$gameId = (int)($_POST['id'] ?? 0);
 
-// A delete() logikai törlést végez: is_active = 0.
-if ($gameId > 0) {
+// A törlés csak POST kérésre fusson le.
+// Ez biztonságosabb, mert egy egyszerű link megnyitása nem módosít adatot.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $gameId > 0) {
     $gameModel->delete($gameId);
 }
 
