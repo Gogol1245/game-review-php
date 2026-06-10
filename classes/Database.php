@@ -31,7 +31,10 @@ class Database
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
         } catch (PDOException $e) {
-            die('Database connection failed: ' . $e->getMessage());
+            // A részletes adatbázis-hibát naplózzuk, de nem írjuk ki a látogatónak.
+            // Így a hiba fejlesztéskor visszakereshető, de a weboldal nem árul el belső technikai adatokat.
+            error_log('Database connection failed: ' . $e->getMessage());
+            die('Nepodarilo sa pripojiť k databáze. Skúste to prosím neskôr.');
         }
     }
 
