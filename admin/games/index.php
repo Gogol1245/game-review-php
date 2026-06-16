@@ -1,16 +1,14 @@
 <?php
 
-// Betöltjük az osztályokat, segédfüggvényeket és a session kezelőt.
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Csak adminoknak elerheto jateklista szerkesztesi es logikai torlesi muveletekkel.
+require_once __DIR__ . '/../../classes/Database.php';
+require_once __DIR__ . '/../../classes/Game.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../classes/Session.php';
-require_once __DIR__ . '/../../classes/Game.php';
 
-// Játékkezelést csak admin végezhet.
 Session::start();
 Session::requireAdmin();
 
-// Az admin lista legfeljebb 100 aktív játékot mutat.
 $gameModel = new Game();
 $games = $gameModel->getAll(100);
 
@@ -37,7 +35,6 @@ require_once __DIR__ . '/../../includes/header.php';
             <?php if (empty($games)): ?>
                 <tr><td colspan="5" style="text-align:center;">Zatiaľ nie sú pridané žiadne hry.</td></tr>
             <?php else: ?>
-                <!-- A táblázat minden sora egy játékot és a hozzá tartozó admin műveleteket mutatja. -->
                 <?php foreach ($games as $game): ?>
                     <tr>
                         <td><?= e($game['id']) ?></td>
@@ -46,10 +43,6 @@ require_once __DIR__ . '/../../includes/header.php';
                         <td><?= e($game['platform']) ?></td>
                         <td>
                             <a href="/game-review-php-main/admin/games/edit.php?id=<?= e($game['id']) ?>" class="btn">✏️ Upraviť</a>
-                            <!--
-                                A törlés POST űrlappal történik, nem sima linkkel.
-                                Így egy véletlen linkmegnyitás nem tud adatot módosítani.
-                            -->
                             <form method="POST" action="/game-review-php-main/admin/games/delete.php" style="display:inline;" onsubmit="return confirm('Naozaj chcete vymazať?')">
                                 <input type="hidden" name="id" value="<?= e($game['id']) ?>">
                                 <button type="submit" class="btn" style="background:#ff4444;">🗑️ Vymazať</button>

@@ -1,15 +1,12 @@
 <?php
 
-// HTML kimenet biztonságos kiírása.
-// Az e() rövid név, mert sablonokban sokszor használjuk.
-// Megakadályozza, hogy egy felhasználó HTML vagy JavaScript kódot írjon ki az oldalra.
+// HTML-be kiiras elott biztonsagosan escapeli az ertekeket.
 function e($value)
 {
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-// Dátum formázása emberi olvasásra.
-// Ha rossz vagy üres dátum érkezik, inkább üres szöveget adunk vissza, nem hibát.
+// Az adatbazisbol jovo datumokat szlovak oldalformara alakitja.
 function formatDate($date, $format = 'd.m.Y')
 {
     $timestamp = strtotime($date);
@@ -19,8 +16,7 @@ function formatDate($date, $format = 'd.m.Y')
     return date($format, $timestamp);
 }
 
-// 1-10 közötti értékelés csillagos megjelenítése.
-// A teli csillagok a pontszámot, az üres csillagok a hiányzó pontokat jelzik.
+// Az 1-10 kozotti ertekelest teli es ures csillagokkal jeleniti meg.
 function renderStars($rating)
 {
     $stars = '';
@@ -30,8 +26,7 @@ function renderStars($rating)
     return $stars;
 }
 
-// URL ellenőrzése képekhez és űrlapokhoz.
-// Az üres URL megengedett, mert nem minden játékhoz kötelező képet megadni.
+// Ures kep URL megengedett, de ha van ertek, annak ervenyes URL-nek kell lennie.
 function isValidUrl($url)
 {
     if (trim($url) === '') {
@@ -41,15 +36,13 @@ function isValidUrl($url)
     return filter_var($url, FILTER_VALIDATE_URL) !== false;
 }
 
-// Egyszerű szöveges mezők tisztítása űrlapfeldolgozás előtt.
-// A trim() levágja a felesleges szóközöket, így tisztább adat kerül az adatbázisba.
+// Egyszeru szoveges urlapmezoket tisztit mentes elott.
 function cleanText($value)
 {
     return trim((string)($value ?? ''));
 }
 
-// Játék űrlap adatainak összegyűjtése egységes szerkezetbe.
-// Így a létrehozás és a szerkesztés ugyanazokat a mezőneveket használja.
+// A jatek letrehozo es szerkeszto urlap ugyanazt az adatszerkezetet hasznalja.
 function collectGameFormData($source)
 {
     return [
@@ -64,8 +57,7 @@ function collectGameFormData($source)
     ];
 }
 
-// Játék űrlap validációja.
-// A kötelező cím mellett az URL-t ellenőrizzük, mert rossz kép URL hibás megjelenést okozhat.
+// Admin jatekurlap ellenorzese Game::create() vagy Game::update() elott.
 function validateGameData($data)
 {
     $errors = [];
@@ -86,9 +78,7 @@ function validateGameData($data)
     return $errors;
 }
 
-// Egy játék kártyájának kirajzolása.
-// Azért van külön függvényben, mert a főoldal és a teljes játéklista ugyanazt a kártya HTML-t használja.
-// Így ha később változtatni kell a játékok megjelenésén, elég ezt az egy függvényt módosítani.
+// Kozos jatekkartya, ezt hasznalja az index.php es a games.php is.
 function renderGameCard($game)
 {
     ?>

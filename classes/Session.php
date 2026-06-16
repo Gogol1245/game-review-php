@@ -1,10 +1,9 @@
 <?php
 
-// A Session osztály a bejelentkezett felhasználó állapotát kezeli.
-// Session nélkül minden oldalbetöltés külön kérés lenne, és a PHP nem tudná, ki van bejelentkezve.
+// Kozponti segedosztaly a bejelentkezett felhasznalo allapotahoz.
 class Session
 {
-    // Elindítja a PHP sessiont, de csak akkor, ha még nem fut.
+    // Elinditja a PHP sessiont, ha meg nem aktiv.
     public static function start()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -12,27 +11,25 @@ class Session
         }
     }
 
-    // Érték mentése a sessionbe, például user_id vagy role.
+    // Egy erteket ment az aktualis sessionbe.
     public static function set($key, $value)
     {
         $_SESSION[$key] = $value;
     }
 
-    // Érték lekérése a sessionből.
-    // Ha nincs ilyen kulcs, a megadott alapértelmezett értéket adja vissza.
+    // Egy erteket olvas ki az aktualis sessionbol.
     public static function get($key, $default = null)
     {
         return $_SESSION[$key] ?? $default;
     }
 
-    // Egy session érték törlése.
+    // Egy erteket torol az aktualis sessionbol.
     public static function delete($key)
     {
         unset($_SESSION[$key]);
     }
 
-    // Teljes kijelentkezés.
-    // Törli a session változókat, a session sütit és végül magát a sessiont is.
+    // Minden session adatot torol. A jelenlegi folyamatban a User::logout() hivja.
     public static function destroy()
     {
         $_SESSION = [];
@@ -44,33 +41,32 @@ class Session
                 $params["secure"], $params["httponly"]
             );
         }
+
         session_destroy();
     }
 
-    // Igazat ad vissza, ha van user_id a sessionben.
+    // A latogato akkor van bejelentkezve, ha van user_id a sessionben.
     public static function isLoggedIn()
     {
         return self::get('user_id') !== null;
     }
 
-    // Igazat ad vissza, ha a bejelentkezett felhasználó admin szerepkörű.
+    // Az admin oldalak ezt a szerepkor-ellenorzest hasznaljak.
     public static function isAdmin()
     {
         return self::get('role') === 'admin';
     }
 
-    // Védett oldalakon használjuk.
-    // Ha nincs bejelentkezés, átirányít a login oldalra.
+    // A vedett oldalak az admin/index.php-ra iranyitanak, ott van a belepesi urlap.
     public static function requireLogin()
     {
         if (!self::isLoggedIn()) {
-            header('Location: /game-review-php-main/admin/login.php');
+            header('Location: /game-review-php-main/admin/index.php');
             exit;
         }
     }
 
-    // Admin oldalak védelme.
-    // Először bejelentkezést kér, utána ellenőrzi az admin jogosultságot.
+    // A jatekkezelo oldalakhoz bejelentkezes es admin szerepkor is kell.
     public static function requireAdmin()
     {
         self::requireLogin();

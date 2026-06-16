@@ -1,17 +1,17 @@
 <?php
 
-// Betöltjük az osztályokat, segédfüggvényeket és a session kezelőt.
-require_once __DIR__ . '/vendor/autoload.php';
+// Jatek reszletezo oldal. A bejelentkezett felhasznalok recenzio bekuldeset is ez kezeli.
+require_once __DIR__ . '/classes/Database.php';
+require_once __DIR__ . '/classes/Game.php';
+require_once __DIR__ . '/classes/Review.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/classes/Session.php';
 
-// Session szükséges, mert recenziót csak bejelentkezett felhasználó írhat.
 Session::start();
 
 $gameModel = new Game();
 $reviewModel = new Review();
 
-// A slug az URL-ből érkezik, például game.php?slug=bloodborne.
 $slug = $_GET['slug'] ?? '';
 $message = '';
 $messageType = '';
@@ -21,7 +21,6 @@ if ($slug === '') {
     exit;
 }
 
-// A játék lekérése slug alapján.
 $game = $gameModel->getBySlug($slug);
 
 if (!$game) {
@@ -34,10 +33,11 @@ if (!$game) {
     exit;
 }
 
-// Recenzió űrlap feldolgozása.
+// Recenziot csak bejelentkezett felhasznalo kuldhet be.
+// A szerzo a sessionbol jon, nem egy szabadon kitoltheto nev mezobol.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     if (!Session::isLoggedIn()) {
-        header('Location: /game-review-php-main/admin/login.php');
+        header('Location: /game-review-php-main/admin/index.php');
         exit;
     }
 
@@ -52,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
         $messageType = 'error';
     } else {
         try {
-            // A Review osztály menti a recenziót és frissíti a játék átlagértékelését.
             $reviewModel->create($game['id'], Session::get('user_id'), $title, $content, $score, $pros, $cons);
 
             $message = 'Vaša recenzia bola úspešne pridaná.';
@@ -65,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
     }
 }
 
-// A játékhoz tartozó recenziók lekérése megjelenítéshez.
 $reviews = $reviewModel->getByGameId($game['id']);
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -98,7 +96,6 @@ require_once __DIR__ . '/includes/header.php';
     <?php if (empty($reviews)): ?>
         <p>Zatiaľ neboli pridané žiadne recenzie. Buďte prvý!</p>
     <?php else: ?>
-        <!-- Minden recenzió külön blokkban jelenik meg. -->
         <?php foreach ($reviews as $review): ?>
             <div style="border-bottom:2px solid #eee; padding:20px 0; margin:20px 0;">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:20px;">
@@ -130,7 +127,7 @@ require_once __DIR__ . '/includes/header.php';
 
     <?php if (!Session::isLoggedIn()): ?>
         <p>Na pridanie recenzie sa musíte prihlásiť.</p>
-        <a href="/game-review-php-main/admin/login.php" class="btn">Prihlásiť sa</a>
+        <a href="/game-review-php-main/admin/index.php" class="btn">Prihlásiť sa</a>
     <?php else: ?>
         <p>Recenziu pridávate ako <strong><?= e(Session::get('username')) ?></strong>.</p>
         <form method="POST" class="admin-form">

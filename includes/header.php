@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="sk">
 <head>
-    <!-- Közös fejléc minden publikus és admin oldalhoz. -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Reviews</title>
     <style>
-        /* Egyszerű, egy fájlban tartott CSS, hogy a projekt könnyen átlátható maradjon. */
+        /* Egyszeru kozos oldalstilus az iskolai projekthez. */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; line-height: 1.6; background: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }

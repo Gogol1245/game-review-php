@@ -1,19 +1,17 @@
 <?php
 
-// Betöltjük az osztályokat, segédfüggvényeket és a session kezelőt.
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Csak admin altal hasznalhato urlap meglevo jatek szerkesztesehez.
+require_once __DIR__ . '/../../classes/Database.php';
+require_once __DIR__ . '/../../classes/Game.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../classes/Session.php';
-require_once __DIR__ . '/../../classes/Game.php';
 
-// Játékot csak admin szerkeszthet.
 Session::start();
 Session::requireAdmin();
 
 $gameModel = new Game();
 $errors = [];
 
-// Az ID GET paraméterből érkezik, például edit.php?id=5.
 $gameId = (int)($_GET['id'] ?? 0);
 $game = $gameModel->getById($gameId);
 
@@ -24,7 +22,6 @@ if (!$game) {
 
 $formData = $game;
 
-// POST esetén az admin elküldte a szerkesztett adatokat.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData = collectGameFormData($_POST);
     $formData['rating'] = (float)($_POST['rating'] ?? 0);

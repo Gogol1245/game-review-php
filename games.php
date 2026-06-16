@@ -1,13 +1,12 @@
 <?php
 
-// Betöltjük az osztályokat, a közös függvényeket és az oldal fejlécét.
-require_once __DIR__ . '/vendor/autoload.php';
+// Teljes publikus jateklista. A szukseges osztalyokat kozvetlenul toltjuk be.
+require_once __DIR__ . '/classes/Database.php';
+require_once __DIR__ . '/classes/Game.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/header.php';
 
 try {
-    // Ez az oldal a teljes aktív játéklistát mutatja.
-    // Azért kérünk nagy limitet, hogy ne csak az első 10 játék jelenjen meg.
     $gameModel = new Game();
     $games = $gameModel->getAll(200);
 } catch (Exception $e) {
@@ -32,7 +31,6 @@ try {
     </div>
 <?php else: ?>
     <div class="games-grid">
-        <!-- Itt már minden aktív játék megjelenik, nem csak a főoldali rövid válogatás. -->
         <?php foreach ($games as $game): ?>
             <?php renderGameCard($game); ?>
         <?php endforeach; ?>

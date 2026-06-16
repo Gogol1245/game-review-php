@@ -1,14 +1,14 @@
 <?php
 
-// Az autoload betölti a classes mappában lévő osztályokat.
-// A functions.php a közös segédfüggvényeket adja, a header pedig az oldal tetejét és a CSS-t.
-require_once __DIR__ . '/vendor/autoload.php';
+// Minden oldal kozvetlenul tolti be a szukseges osztalyokat.
+require_once __DIR__ . '/classes/Database.php';
+require_once __DIR__ . '/classes/Game.php';
+require_once __DIR__ . '/classes/Review.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/header.php';
 
 try {
-    // A főoldalon csak a legújabb játékokból mutatunk egy rövid válogatást.
-    // A teljes játéklista külön oldalon van: games.php.
+    // A fooldal rovid elonezetet mutat: legujabb recenziok es legujabb jatekok.
     $gameModel = new Game();
     $reviewModel = new Review();
     $games = $gameModel->getAll(6);
@@ -33,7 +33,6 @@ try {
         </div>
     <?php else: ?>
         <div class="games-grid">
-            <!-- A foreach minden legfrissebb recenzióból egy kártyát készít. -->
             <?php foreach ($latestReviews as $review): ?>
                 <div class="game-card">
                     <div class="game-card-content">
@@ -60,7 +59,6 @@ try {
         </div>
     <?php else: ?>
         <div class="games-grid">
-            <!-- Ez csak főoldali rövid lista. Az összes játék a Játékok menüpontban található. -->
             <?php foreach ($games as $game): ?>
                 <?php renderGameCard($game); ?>
             <?php endforeach; ?>

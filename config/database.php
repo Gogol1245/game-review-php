@@ -1,7 +1,6 @@
 <?php
 
 // Ez a fájl csak az adatbázis-kapcsolathoz szükséges beállításokat adja vissza.
-// A Database osztály require segítségével tölti be, így a kapcsolódási adatok egy helyen maradnak.
 return [
     // A MySQL szerver címe. XAMPP alatt a 127.0.0.1 megbízhatóbb lehet, mint a localhost.
     'host' => '127.0.0.1',

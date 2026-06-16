@@ -1,12 +1,11 @@
 <?php
 
-// Betöltjük az osztályokat, segédfüggvényeket és a session kezelőt.
-require_once __DIR__ . '/../../vendor/autoload.php';
+// Csak admin altal hasznalhato urlap uj jatek letrehozasahoz.
+require_once __DIR__ . '/../../classes/Database.php';
+require_once __DIR__ . '/../../classes/Game.php';
 require_once __DIR__ . '/../../includes/functions.php';
 require_once __DIR__ . '/../../classes/Session.php';
-require_once __DIR__ . '/../../classes/Game.php';
 
-// Új játékot csak admin hozhat létre.
 Session::start();
 Session::requireAdmin();
 
@@ -24,7 +23,6 @@ $formData = [
     'rating' => 0,
 ];
 
-// POST esetén az admin elküldte az új játék űrlapját.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData = collectGameFormData($_POST);
     $formData['rating'] = (float)($_POST['rating'] ?? 0);

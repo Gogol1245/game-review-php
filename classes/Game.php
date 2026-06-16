@@ -1,20 +1,17 @@
 <?php
 
-// A Game osztály a játékok adatbázis-műveleteit fogja össze.
-// Így a publikus oldal és az admin felület nem közvetlenül ír SQL-t, hanem ezt az osztályt használja.
+// Jatekok adatbazis-modellje. Az admin oldalak CRUD muveletekre,
+// a publikus oldalak listazasra es reszletezo oldalra hasznaljak.
 class Game
 {
-    // PDO kapcsolat a lekérdezésekhez.
     private $db;
 
-    // Konstruktor: elkéri a közös adatbázis-kapcsolatot.
     public function __construct()
     {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Aktív játékok listázása.
-    // Az SQL csak azokat a játékokat kéri le, amelyeket nem töröltünk logikailag.
+    // Csak aktiv jatekokat ad vissza. A logikailag torolt jatekok is_active erteke 0.
     public function getAll($limit = 10, $offset = 0)
     {
         $stmt = $this->db->prepare("
@@ -31,8 +28,7 @@ class Game
         return $stmt->fetchAll();
     }
 
-    // Egy játék lekérése URL-barát slug alapján.
-    // A publikus game.php ezt használja, például: game.php?slug=elden-ring.
+    // A publikus jatekoldal a game.php?slug=... parameterbol dolgozik.
     public function getBySlug($slug)
     {
         $stmt = $this->db->prepare("
@@ -45,8 +41,7 @@ class Game
         return $stmt->fetch() ?: null;
     }
 
-    // Egy játék lekérése belső ID alapján.
-    // Az admin szerkesztő és törlő oldalak használják.
+    // Az admin szerkesztes es torles numerikus id-t hasznal.
     public function getById($id)
     {
         $stmt = $this->db->prepare("
@@ -59,8 +54,7 @@ class Game
         return $stmt->fetch() ?: null;
     }
 
-    // Új játék létrehozása.
-    // A slug automatikusan a címből készül, hogy szép és könnyen olvasható URL legyen.
+    // Jatekot hoz letre az admin urlapbol, es egyedi slugot general.
     public function create($data)
     {
         $data = $this->prepareGameData($data);
@@ -77,8 +71,7 @@ class Game
         return (int)$this->db->lastInsertId();
     }
 
-    // Meglévő játék módosítása.
-    // Ha a cím változik, a slug is frissül, de az aktuális rekord ID-ját kizárjuk az ütközésvizsgálatból.
+    // Frissiti a jatek adatait, es cimvaltozasnal a slugot is ujrageneralja.
     public function update($id, $data)
     {
         $data = $this->prepareGameData($data);
@@ -104,8 +97,7 @@ class Game
         return $stmt->execute($data);
     }
 
-    // Játék törlése logikai törléssel.
-    // Nem töröljük ki fizikailag a sort, csak inaktívvá tesszük, így később visszakereshető marad.
+    // Logikai torles: a sor megmarad az adatbazisban, de eltunik a publikus listakbol.
     public function delete($id)
     {
         $stmt = $this->db->prepare("
@@ -117,7 +109,6 @@ class Game
         return $stmt->execute(['id' => $id]);
     }
 
-    // Az űrlapból érkező adatokat egységesen előkészíti az adatbázishoz.
     private function prepareGameData($data)
     {
         return [
@@ -133,8 +124,7 @@ class Game
         ];
     }
 
-    // URL-barát slug készítése a játék címéből.
-    // Példa: "The Witcher 3: Wild Hunt" -> "the-witcher-3-wild-hunt".
+    // A cimből URL-barat slugot keszit, utkozes eseten idobelyeget fuz hozza.
     private function createSlug($title, $excludeId = null)
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title), '-'));
@@ -147,8 +137,6 @@ class Game
             $params['exclude_id'] = $excludeId;
         }
 
-        // Ez az SQL azt ellenőrzi, létezik-e már ugyanilyen slug.
-        // Ha igen, időbélyeget teszünk a végére, hogy egyedi legyen.
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
