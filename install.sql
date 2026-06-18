@@ -55,11 +55,15 @@ CREATE TABLE IF NOT EXISTS reviews (
     INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Alap felhasználók.
--- A hash érték példa az admin123 jelszóhoz. Kész projektben a belépéshez elegendő az adatbázisban tárolt hash.
+-- Alap felhasználók a bemutatóhoz.
+-- Admin: admin / admin123, felhasználó: user / user123.
 INSERT INTO users (username, email, password, role) VALUES
-('admin', 'admin@gamereviews.sk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin')
-ON DUPLICATE KEY UPDATE email = VALUES(email), role = VALUES(role);
+('admin', 'admin@gamereviews.sk', '$2y$10$Ri6yuiBMQ9kGW3/YCdrg9OP.sRQjvd6Et3LeG9ncZaN6rgs88jt2y', 'admin'),
+('user', 'user@gamereviews.sk', '$2y$10$3Oubx6nPdw97AF1fWq7BGOZt25rGbPawCIQv281WCR33IVqyCDFwW', 'editor')
+ON DUPLICATE KEY UPDATE
+    email = VALUES(email),
+    password = VALUES(password),
+    role = VALUES(role);
 
 -- Alap és bővített játékadatok.
 -- ON DUPLICATE KEY UPDATE miatt a slug alapján meglévő játék frissül, az új játék pedig beszúródik.
@@ -97,17 +101,9 @@ ON DUPLICATE KEY UPDATE
     rating = VALUES(rating),
     is_active = 1;
 
--- Ukážkoví autori recenzií.
--- Sú to bežní editori, aby recenzie nepôsobili ako anonymné systémové dáta.
-INSERT INTO users (username, email, password, role) VALUES
-('marek', 'marek@gamereviews.sk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'editor'),
-('lucia', 'lucia@gamereviews.sk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'editor'),
-('peter', 'peter@gamereviews.sk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'editor'),
-('simona', 'simona@gamereviews.sk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'editor')
-ON DUPLICATE KEY UPDATE email = VALUES(email), role = VALUES(role);
-
--- Ku každej aktívnej hre vložíme tri slovenské recenzie.
--- NOT EXISTS zabráni tomu, aby sa rovnaké ukážkové recenzie vložili dvakrát.
+-- Minden aktív játékhoz három szlovák nyelvű mintarecenziót adunk.
+-- Mindhárom recenzió szerzője a user felhasználó.
+-- A NOT EXISTS megakadályozza, hogy ugyanazok a mintarecenziók kétszer kerüljenek be.
 INSERT INTO reviews (game_id, user_id, title, content, score, pros, cons, is_published)
 SELECT
     g.id,
@@ -120,13 +116,13 @@ SELECT
     1
 FROM games g
 JOIN (
-    SELECT 'marek' AS username, 'Výborný herný zážitok' AS title, '{game} ma veľmi bavilo. Hra má dobré tempo, kvalitné spracovanie a dostatok obsahu, takže sa k nej dá ľahko vracať.' AS content, 0 AS score_offset, 'atmosféra, hrateľnosť, obsah' AS pros, 'niektoré časti môžu byť náročnejšie' AS cons
+    SELECT 'Výborný herný zážitok' AS title, '{game} ma veľmi bavilo. Hra má dobré tempo, kvalitné spracovanie a dostatok obsahu, takže sa k nej dá ľahko vracať.' AS content, 0 AS score_offset, 'atmosféra, hrateľnosť, obsah' AS pros, 'niektoré časti môžu byť náročnejšie' AS cons
     UNION ALL
-    SELECT 'lucia', 'Silná atmosféra a dobré spracovanie', 'Na hre {game} oceňujem hlavne atmosféru a spôsob, akým drží hráča pri hraní. Nie je to len pekná hra, ale aj zábavná.', -1, 'atmosféra, vizuál, zábavnosť', 'miestami pomalšie pasáže'
+    SELECT 'Silná atmosféra a dobré spracovanie', 'Na hre {game} oceňujem hlavne atmosféru a spôsob, akým drží hráča pri hraní. Nie je to len pekná hra, ale aj zábavná.', -1, 'atmosféra, vizuál, zábavnosť', 'miestami pomalšie pasáže'
     UNION ALL
-    SELECT 'peter', 'Stojí za zahranie', '{game} je titul, ktorý by si mal vyskúšať každý fanúšik žánru. Má svoje drobné slabiny, ale celkový dojem je veľmi dobrý.', 0, 'kvalitný obsah, dobrý dizajn, znovuhrateľnosť', 'nie všetko sadne každému hráčovi'
+    SELECT 'Stojí za zahranie', '{game} je titul, ktorý by si mal vyskúšať každý fanúšik žánru. Má svoje drobné slabiny, ale celkový dojem je veľmi dobrý.', 0, 'kvalitný obsah, dobrý dizajn, znovuhrateľnosť', 'nie všetko sadne každému hráčovi'
 ) seed
-JOIN users u ON u.username = seed.username
+JOIN users u ON u.username = 'user'
 WHERE g.is_active = 1
 AND NOT EXISTS (
     SELECT 1
@@ -134,7 +130,7 @@ AND NOT EXISTS (
     WHERE r.game_id = g.id AND r.title = seed.title
 );
 
--- Po vložení recenzií prepočítame priemerné hodnotenie každej hry.
+-- A recenziók beszúrása után újraszámoljuk minden játék átlagos értékelését.
 UPDATE games g
 SET rating = (
     SELECT ROUND(AVG(r.score), 1)
